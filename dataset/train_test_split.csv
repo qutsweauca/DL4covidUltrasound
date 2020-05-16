@@ -1,0 +1,36 @@
+patient_hash,hospital,patient,split
+73a732910a2b39a91901fd521eabfa94,Gemelli - Roma,Paziente 4,test
+a9c92392f4da1384e59b470520a30728,Gemelli - Roma,Paziente 3,test
+372fe8b062f79442592c205ee5cf818f,Gemelli - Roma,Paziente 2,test
+3bd10bb509bc09d5e8a4664a55adda72,No Covid Data,Paziente 10,test
+42e59975cb11fc8522771d511b3c576f,No Covid Data,Paziente 11,test
+4a5531f3d25febf86b7996251e6ee5c0,Brescia,Paziente 7,test
+11a1551728fb9277ef7f21a8e21a7efd,No Covid Data,Paziente 13,test
+c5ab6069c8d2cc396748d262e5d9e9a7,Pavia,Paziente 1,test
+03b10b2d610af5695768ee2c183b9275,No Covid Data,Paziente 1,test
+aa73eecd98054092ef788c43fb45058c,No Covid Data,Paziente 5,test
+38fcc3f8e300d533bc15cd0e61587630,Brescia,Paziente 10,test
+ae49e39f9327a607d1fd8a8008596bbb,No Covid Data,Paziente 4,train
+2fb8334552c05009d1a617f6f0062cfc,No Covid Data,Paziente 6,train
+f42e78544511abc87b9775f3e536c8bd,No Covid Data,Paziente 12,train
+8dc9eef09da4cc6602afba499e2dc95a,No Covid Data,Paziente 7,train
+20d5a0f425300d77ee829217c061cca6,No Covid Data,Paziente 8,train
+ed28ff080b7a122d3b00ca24474e6fe9,No Covid Data,Paziente 9,train
+50b999c5b0b4e0ad35d24c75dc0e81a7,No Covid Data,Paziente 3,train
+8c6012cccc66d0354b9b39ca5c6cfabd,No Covid Data,Paziente 14,train
+e6ce8cf82c30fa81b57970e73aa35c87,Germania,Paziente 1,train
+69deefa137b13c2677bdf9eef66f3b9f,Lucca,Paziente 1,train
+3751c837cdddae4112eaa503e74281e3,Gemelli - Roma,Paziente 1,train
+e5727229c0f7fbc56f7eeec6ee50b64d,Brescia,Paziente 9,train
+d6e2ba857d5fbe9822d143bbb3edd9e2,Brescia,Paziente 8,train
+16965b54e4290f8b5d01bcf4a37d1a98,Brescia,Paziente 6,train
+1dd25cacbec1fcdca89c5712127ee628,Brescia,Paziente 5,train
+7e7cf40c629e580f365b30ac9c3b0746,Brescia,Paziente 4,train
+af6ec79416a51b7fe4c6360ba22b8e49,Brescia,Paziente 3,train
+4aaa7bfc52815a4d3f7ae53531f2502c,Brescia,Paziente 2,train
+dc2468c1c6cc7e6e70d5734fc2c986b9,Brescia,Paziente 13,train
+8e4789b0f606285ce6ce5f4d47c20252,Brescia,Paziente 12,train
+4e083ca76c34bf4405d4662965bd3013,Brescia,Paziente 11,train
+ea421172c0515cb11eaefecb90906ca1,Brescia,Paziente 1,train
+ec51c11582491bcd7734a0397fc5332f,Lucca,Paziente 2,train
+e4a8c81dbef7da94f1438e4bc6bbaeef,Pavia,Paziente 2,train
