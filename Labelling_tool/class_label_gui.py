@@ -7,6 +7,7 @@ from label_gui_plot import get_list_of_images_from_dicom_file
 import pandas as pd
 from functools import partial
 
+
 class LabelGUI:
     def __init__(
             self, master,
@@ -20,9 +21,8 @@ class LabelGUI:
             dicom_data_path (str): main path where the DICOM files are stores
             file_extension (str): extension of the DICOM files containing the images.
         """
-        self.label_mode = 'multiple'
-        if self.label_mode == 'multiple':
-            self.labels = []
+        # self.label_mode = 'multiple'
+        self.labels = []
 
         # Initializing some stuff
         self.master = master
@@ -31,10 +31,9 @@ class LabelGUI:
         self.video_info = pd.DataFrame(columns=['video file', 'scan location'])
         self.frame_info = pd.DataFrame(columns=['video file', 'pathology label'])
         self.frame_index_start = 0
-        self.us_scan_positions = ('RANT - LE', 'LANT - LE', 'RANT - 2nd space', 'LANT - 2nd space',
-                                  'LPL - LE', 'LPL - NS', 'RPL - LE', 'RPL - NS', 'LPU', 'RPU')
+        self.us_scan_positions = ('RANT', 'LANT', 'LPL',  'RPL', 'LPU', 'RPU')
         self.first_row_multiple_buttons = 15
-        self.pathology_labels = ['Healthy', 'Collapse', 'Consolidation', 'APO / Int. Syndrome', 'Pneumothorax', 'Effusion']
+        self.pathology_labels = ['Normal', 'Collapse', 'Consolidation', 'APO / Int. Syndrome', 'Pneumothorax', 'Effusion', 'B-lines', 'Pleural thickening', 'Irregular pleura']
         self.figure = plt.figure(figsize=(10, 8))
         self.figure.set_tight_layout(True)
         self.buttonwidth = 15
@@ -128,12 +127,24 @@ class LabelGUI:
                                      command=lambda: self.save_data())
         save_button.grid(row=2, column=1)
 
-    def next_frame(self):
-        if self.label_mode == 'multiple':
-            self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = ', '.join(self.labels)
+        label_mode_frame = tkinter.Frame(self.master, background='white')
+        label_mode_frame.grid(column=1, row=5, padx=10, sticky='w')
+        self.label_mode = tkinter.StringVar()
+        self.label_mode.set('multiple')
+        label_mode_text = tkinter.Label(master=label_mode_frame, text='Label mode', background='white')
+        label_mode_text.grid(sticky='w')
+        single_label_rad_button = tkinter.Radiobutton(master=label_mode_frame, text='Single', variable=self.label_mode, value='single',
+                                                      bg='white')
+        single_label_rad_button.grid(sticky='w')
+        multiple_labels_rad_button = tkinter.Radiobutton(master=label_mode_frame, text='Multiple', variable=self.label_mode, value='multiple',
+                                                         bg='white')
+        multiple_labels_rad_button.grid(sticky='w')
 
+    def next_frame(self):
+        if self.label_mode.get() == 'multiple':
+            self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = ', '.join(self.labels)
+            self.restore_color_of_label_buttons()
             self.labels = []
-        self.save_data()
         if self.frame_num < (len(self.frames)-1):
             self.frame_num += 1
             self.update_frame()
@@ -213,18 +224,26 @@ class LabelGUI:
             label_button.grid(row=i, column=1)
             misc_button_frame.rowconfigure(i, pad=5)
             self.labelling_buttons.append(label_button)
-        if self.label_mode == 'multiple':
+        if self.label_mode.get() == 'multiple':
             clear_labels_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text='Clear labels',
                                                  command=self.process_clear_label_button)
             clear_labels_button.grid(row=i+1, column=1)
             misc_button_frame.rowconfigure(i+1, pad=50)
             self.labelling_buttons.append(clear_labels_button)
         self.labelling_buttons.append(misc_button_frame)
+        self.default_button_color = label_button.cget("background") # Save button color to restore it later
         self.frame_num = 0
         self.update_frame()
 
     def process_clear_label_button(self):
+        self.restore_color_of_label_buttons()
         self.labels = []
+
+    def restore_color_of_label_buttons(self):
+        for label in self.labels:
+            pathology_index = self.pathology_labels.index(label)
+            pressed_button = self.labelling_buttons[pathology_index]
+            pressed_button.configure(bg=self.default_button_color)
 
     def destroy_list_of_GUI_components(self, component_list):
         for component in component_list:
@@ -241,11 +260,15 @@ class LabelGUI:
         print(self.video_info)
 
     def process_label_button_press(self, pathology):
-        if self.label_mode == 'multiple':
+        print(self.label_mode.get())
+        if self.label_mode.get() == 'multiple':
             if not pathology in self.labels:
+                pathology_index = self.pathology_labels.index(pathology)
+                pressed_button = self.labelling_buttons[pathology_index]
+                pressed_button.configure(bg='dark gray')
                 self.labels.append(pathology)
             else:
-                print('This label has already been added to this frame' )
+                print('This label has already been added to this frame')
         else:
             self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = pathology
             self.next_frame()

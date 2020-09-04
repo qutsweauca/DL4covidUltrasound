@@ -37,3 +37,10 @@ gui_window.mainloop()
 #
 #
 # os.path.exists(r'C:\Users\jeroe\PycharmProjects\labelling\Bilateral pleural effusion\036\frame_info_036.csv')
+
+import tkinter
+gui_window = tkinter.Tk()
+a = tkinter.StringVar()
+a.set('test')
+
+print(a.get())
