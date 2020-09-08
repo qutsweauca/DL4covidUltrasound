@@ -159,11 +159,12 @@ class LabelGUI:
 
     def next_frame(self):
         if self.label_mode.get() == 'multiple':
-            multiple_label_text = ', '.join(self.labels)
-            self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = multiple_label_text
-            self.print_labelling_text(multiple_label_text)
-            self.restore_color_of_label_buttons()
-            self.labels = []
+            if len(self.labels) > 0:
+                multiple_label_text = ', '.join(self.labels)
+                self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = multiple_label_text
+                self.print_labelling_text(multiple_label_text)
+                self.restore_color_of_label_buttons()
+                self.labels = []
         if self.frame_num < (len(self.frames)-1):
             self.frame_num += 1
             self.update_frame()
