@@ -7,7 +7,7 @@ from get_files_with_extension import get_files_with_extension
 from label_gui_plot import get_list_of_images_from_dicom_file
 import pandas as pd
 from functools import partial
-
+import numpy as np
 
 class LabelGUI:
     def __init__(
@@ -24,6 +24,7 @@ class LabelGUI:
         """
         # self.label_mode = 'multiple'
         self.labels = []
+        self.labelling_buttons = []
 
         # Initializing some stuff
         self.master = master
@@ -35,7 +36,8 @@ class LabelGUI:
         self.us_scan_positions = ('RANT', 'LANT', 'LPL',  'RPL', 'LPU', 'RPU')
         self.first_row_multiple_buttons = 15
         self.pathology_labels = ['Normal', 'Collapse', 'Consolidation', 'APO / Int. Syndrome', 'Pneumothorax', 'Effusion', 'B-lines', 'Pleural thickening', 'Irregular pleura']
-        self.figure = plt.figure(figsize=(10, 8))
+
+        self.figure = plt.figure(figsize=np.array((9.6, 7.2))*1.1)
         self.figure.set_tight_layout(True)
         self.buttonwidth = 20
         self.create_output_filename()
@@ -106,7 +108,7 @@ class LabelGUI:
 
     def plot_frame(self):
         plt.gca()
-        plt.imshow(self.frames[self.frame_num])
+        plt.imshow(self.frames[self.frame_num], aspect='equal')
         plt.xticks([])
         plt.yticks([])
         plt.title('Frame {} / {}'.format(self.frame_num + 1, len(self.frames)))
