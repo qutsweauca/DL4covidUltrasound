@@ -1,4 +1,5 @@
 import tkinter
+import tkinter.font as tkFont
 import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -18,7 +19,7 @@ class LabelGUI:
         """LabelGUI class generates a GUI to allow assessment of images
         # Arguments:
             first_video (int): integer that indicates at which video file the process should start.
-            dicom_data_path (str): main path where the DICOM files are stores
+            dicom_data_path (str): main path where the DICOM files are stored
             file_extension (str): extension of the DICOM files containing the images.
         """
         # self.label_mode = 'multiple'
@@ -36,13 +37,14 @@ class LabelGUI:
         self.pathology_labels = ['Normal', 'Collapse', 'Consolidation', 'APO / Int. Syndrome', 'Pneumothorax', 'Effusion', 'B-lines', 'Pleural thickening', 'Irregular pleura']
         self.figure = plt.figure(figsize=(10, 8))
         self.figure.set_tight_layout(True)
-        self.buttonwidth = 15
+        self.buttonwidth = 20
         self.create_output_filename()
 
         # Getting and storing DICOM file names
         self.dicom_file_names = get_files_with_extension(self.dicom_data_path, file_extension)
         self.video_info.loc[:, 'video file'] = self.dicom_file_names
 
+        # self.master.bind("<Key>", self.process_key_press)
         self.init_GUI()
 
     def create_output_filename(self):
@@ -69,12 +71,17 @@ class LabelGUI:
 
         # Create plotting canvas
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.master)
-        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=50)
+        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=50, columnspan=2)
         self.init_data_for_GUI()
         self.plot_frame()
 
         self.add_standard_buttons()
         self.scan_pos_question_components = self.go_to_scan_position_question()  # Start with scanning position
+        self.label_text_font = tkFont.Font(family='Segoe UI', size=12)
+        self.label_text_font_bold = tkFont.Font(family='Segoe UI', size=12, weight='bold')
+        self.label_text = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white') # Initialize text label below the figure without text
+        self.label_text.grid(row=51)
+        self.label_text2 = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white')  # Initialize text label below the figure without text
 
     def init_data_for_GUI(self):
         self.frames = get_list_of_images_from_dicom_file(self.dicom_file_names[self.video_number])[0:10]
@@ -109,40 +116,50 @@ class LabelGUI:
         self.canvas.draw()
 
     def add_standard_buttons(self):
+
+        # Create a placeholder for the standard buttons
         std_button_frame = tkinter.Frame(self.master, padx=10, background='white')
-        std_button_frame.grid(column=1, row=43)
+        std_button_frame.grid(column=4, row=43)
         std_button_frame.rowconfigure(0, pad=5)
         std_button_frame.rowconfigure(1, pad=5)
         std_button_frame.rowconfigure(2, pad=5)
 
-        next_frame_button = tkinter.Button(master=std_button_frame, height=1, width=self.buttonwidth, text="Next Frame",
+        # Next and previous frame buttons
+        next_frame_button = tkinter.Button(master=std_button_frame, height=1, width=self.buttonwidth, text="Next Frame (l)",
                                        command=lambda: self.next_frame())
-        previous_frame_button = tkinter.Button(master=std_button_frame, height=1, width=self.buttonwidth, text="Previous Frame",
+        previous_frame_button = tkinter.Button(master=std_button_frame, height=1, width=self.buttonwidth, text="Previous Frame (k)",
                                        command=lambda: self.previous_frame())
-        next_frame_button.grid(row=0, column=1)
-        previous_frame_button.grid(row=1, column=1)
+        next_frame_button.grid(row=0, column=4)
+        previous_frame_button.grid(row=1, column=4)
 
         # Create save button
         save_button = tkinter.Button(master=std_button_frame, height=1, width=self.buttonwidth, text="Save",
                                      command=lambda: self.save_data())
-        save_button.grid(row=2, column=1)
+        save_button.grid(row=2, column=4)
 
+        # Label mode selection
         label_mode_frame = tkinter.Frame(self.master, background='white')
-        label_mode_frame.grid(column=1, row=5, padx=10, sticky='w')
+        label_mode_frame.grid(column=4, row=5, padx=10, sticky='w')
+
         self.label_mode = tkinter.StringVar()
         self.label_mode.set('multiple')
+
         label_mode_text = tkinter.Label(master=label_mode_frame, text='Label mode', background='white')
         label_mode_text.grid(sticky='w')
+
         single_label_rad_button = tkinter.Radiobutton(master=label_mode_frame, text='Single', variable=self.label_mode, value='single',
                                                       bg='white')
         single_label_rad_button.grid(sticky='w')
+
         multiple_labels_rad_button = tkinter.Radiobutton(master=label_mode_frame, text='Multiple', variable=self.label_mode, value='multiple',
                                                          bg='white')
         multiple_labels_rad_button.grid(sticky='w')
 
     def next_frame(self):
         if self.label_mode.get() == 'multiple':
-            self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = ', '.join(self.labels)
+            multiple_label_text = ', '.join(self.labels)
+            self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = multiple_label_text
+            self.print_labelling_text(multiple_label_text)
             self.restore_color_of_label_buttons()
             self.labels = []
         if self.frame_num < (len(self.frames)-1):
@@ -166,7 +183,7 @@ class LabelGUI:
     def go_to_scan_position_question(self):
 
         ques_frame = tkinter.Frame(self.master, padx=10, background='white')
-        ques_frame.grid(column=1, row=8)
+        ques_frame.grid(column=4, row=8)
         ques_frame.rowconfigure(0, pad=5)
         ques_frame.rowconfigure(1, pad=5)
         ques_frame.rowconfigure(2, pad=5)
@@ -176,23 +193,23 @@ class LabelGUI:
                                         command=lambda: self.confirm_us_scan_position())
         no_button = tkinter.Button(master=ques_frame, height=1, width=self.buttonwidth, text="No",
                                        command=lambda: self.reject_us_scan_position())
-        yes_button.grid(row=1, column=1)
-        no_button.grid(row=2, column=1)
+        yes_button.grid(row=1, column=4)
+        no_button.grid(row=2, column=4)
 
         view = self.get_US_scan_location()
         scan_pos_ques = tkinter.Label(ques_frame, text='Is this a {} view?'.format(view), background='white')
-        scan_pos_ques.grid(row=0, column=1)
+        scan_pos_ques.grid(row=0, column=4)
         return [yes_button, no_button, scan_pos_ques, ques_frame]  # return handles to components to clean them up later
 
     def go_to_set_US_scan_location_view(self):
         self.scan_buttons = []
         misc_button_frame = tkinter.Frame(self.master, padx=10, background='white')
-        misc_button_frame.grid(column=1, row=12, rowspan=len(self.us_scan_positions)*3)
+        misc_button_frame.grid(column=4, row=12, rowspan=len(self.us_scan_positions)*3)
         for i, button_name in enumerate(self.us_scan_positions):
             print(type(button_name))
             scan_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text=button_name,
                                      command=partial(self.process_scan_position_button_press, button_name))
-            scan_button.grid(row=i, column=1)
+            scan_button.grid(row=i, column=4)
             misc_button_frame.rowconfigure(i, pad=5)
             self.scan_buttons.append(scan_button)
         self.scan_buttons.append(misc_button_frame)
@@ -217,19 +234,21 @@ class LabelGUI:
     def go_to_labelling_view(self):
         self.labelling_buttons = []
         misc_button_frame = tkinter.Frame(self.master, padx=10, background='white')
-        misc_button_frame.grid(column=1, row=12, rowspan=len(self.pathology_labels)*3)
+        misc_button_frame.grid(column=4, row=12, rowspan=len(self.pathology_labels)*3)
         for i, button_name in enumerate(self.pathology_labels):
-            label_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text=button_name,
-                                          command=partial(self.process_label_button_press, button_name))
-            label_button.grid(row=i, column=1)
+            label_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text='({}) '.format(i) + button_name,
+                                          command=partial(self.process_label_button_press, button_name), anchor='w')
+            label_button.grid(row=i, column=4)
             misc_button_frame.rowconfigure(i, pad=5)
             self.labelling_buttons.append(label_button)
         if self.label_mode.get() == 'multiple':
             clear_labels_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text='Clear labels',
                                                  command=self.process_clear_label_button)
-            clear_labels_button.grid(row=i+1, column=1)
+            clear_labels_button.grid(row=i+1, column=4)
             misc_button_frame.rowconfigure(i+1, pad=50)
             self.labelling_buttons.append(clear_labels_button)
+        misc_button_frame.bind("<Key>", self.process_key_press)
+        misc_button_frame.focus_set()
         self.labelling_buttons.append(misc_button_frame)
         self.default_button_color = label_button.cget("background") # Save button color to restore it later
         self.frame_num = 0
@@ -259,6 +278,18 @@ class LabelGUI:
         self.go_to_labelling_view()
         print(self.video_info)
 
+    def process_key_press(self, event):
+        if str.isnumeric(event.char):
+            label_no = int(event.char)
+            if label_no < len(self.pathology_labels):
+                self.process_label_button_press(self.pathology_labels[int(event.char)])
+            else:
+                print('Number pressed exceeds the amount of labels')
+        elif event.char == 'l':
+            self.next_frame()
+        elif event.char == 'k':
+            self.previous_frame()
+
     def process_label_button_press(self, pathology):
         print(self.label_mode.get())
         if self.label_mode.get() == 'multiple':
@@ -271,7 +302,18 @@ class LabelGUI:
                 print('This label has already been added to this frame')
         else:
             self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = pathology
+            self.print_labelling_text(pathology)
             self.next_frame()
+
+    def print_labelling_text(self, labels):
+        self.label_text.destroy()
+        self.label_text2.destroy()
+        label_string = '{}'.format(labels)
+        label_text = ' label saved for frame {} / {}'.format(self.frame_num + 1, len(self.frames))
+        self.label_text = tkinter.Label(master=self.master, text=label_string, font=self.label_text_font_bold, background='white')
+        self.label_text2 = tkinter.Label(master=self.master, text=label_text, font=self.label_text_font, background='white')
+        self.label_text.grid(row=51, column=0, sticky='e')
+        self.label_text2.grid(row=51, column=1, sticky='W')
 
     def save_data(self):
         self.frame_info.to_csv(os.path.join(self.dicom_data_path, self.frame_output_file))
