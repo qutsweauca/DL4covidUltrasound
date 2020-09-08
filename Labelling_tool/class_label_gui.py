@@ -55,7 +55,6 @@ class LabelGUI:
         self.video_output_file = self.check_for_duplicate_filename(self.dicom_data_path, self.video_output_file)
 
     def check_for_duplicate_filename(self, datapath, filename):
-        print(os.path.join(datapath, filename))
         if os.path.exists(os.path.join(datapath, filename)):
             filename = filename[:-4] + '_1' + filename[-4:]
 
@@ -85,6 +84,9 @@ class LabelGUI:
 
     def init_data_for_GUI(self):
         self.frames = get_list_of_images_from_dicom_file(self.dicom_file_names[self.video_number])[0:10]
+
+        for frame in self.frames:
+            print(frame.shape)
 
         self.frame_index = self.generate_frame_index(self.frame_index_start, len(self.frames))
         frame_index_df = pd.DataFrame(columns=['video file'], data=[self.dicom_file_names[self.video_number]] * len(self.frames))
@@ -206,7 +208,6 @@ class LabelGUI:
         misc_button_frame = tkinter.Frame(self.master, padx=10, background='white')
         misc_button_frame.grid(column=4, row=12, rowspan=len(self.us_scan_positions)*3)
         for i, button_name in enumerate(self.us_scan_positions):
-            print(type(button_name))
             scan_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text=button_name,
                                      command=partial(self.process_scan_position_button_press, button_name))
             scan_button.grid(row=i, column=4)
@@ -220,7 +221,6 @@ class LabelGUI:
         view = self.get_US_scan_location()
         self.video_info.loc[self.video_number, 'scan location'] = view
         self.go_to_labelling_view()
-        print(self.video_info)
 
     def reject_us_scan_position(self):
         self.destroy_scan_pos_question()
@@ -266,17 +266,14 @@ class LabelGUI:
 
     def destroy_list_of_GUI_components(self, component_list):
         for component in component_list:
-            print('destroying {}'.format(component))
             component.destroy()
 
     def process_scan_position_button_press(self, view):
         print(view)
         self.video_info.loc[self.video_number, 'scan location'] = view
         for button in self.scan_buttons:
-            print('destroying {}'.format(button))
             button.destroy()
         self.go_to_labelling_view()
-        print(self.video_info)
 
     def process_key_press(self, event):
         if str.isnumeric(event.char):
@@ -291,7 +288,6 @@ class LabelGUI:
             self.previous_frame()
 
     def process_label_button_press(self, pathology):
-        print(self.label_mode.get())
         if self.label_mode.get() == 'multiple':
             if not pathology in self.labels:
                 pathology_index = self.pathology_labels.index(pathology)
