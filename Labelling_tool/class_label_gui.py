@@ -1,5 +1,6 @@
 import tkinter
 import tkinter.font as tkFont
+
 import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -46,7 +47,6 @@ class LabelGUI:
         self.dicom_file_names = get_files_with_extension(self.dicom_data_path, file_extension)
         self.video_info.loc[:, 'video file'] = self.dicom_file_names
 
-        # self.master.bind("<Key>", self.process_key_press)
         self.init_GUI()
 
     def create_output_filename(self):
@@ -85,11 +85,7 @@ class LabelGUI:
         self.label_text2 = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white')  # Initialize text label below the figure without text
 
     def init_data_for_GUI(self):
-        self.frames = get_list_of_images_from_dicom_file(self.dicom_file_names[self.video_number])[0:10]
-
-        for frame in self.frames:
-            print(frame.shape)
-
+        self.frames = get_list_of_images_from_dicom_file(self.dicom_file_names[self.video_number])
         self.frame_index = self.generate_frame_index(self.frame_index_start, len(self.frames))
         frame_index_df = pd.DataFrame(columns=['video file'], data=[self.dicom_file_names[self.video_number]] * len(self.frames))
         self.frame_info = self.frame_info.append(frame_index_df).fillna('')
