@@ -72,7 +72,7 @@ class LabelGUI:
 
         # Create plotting canvas
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.master)
-        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=50, columnspan=2)
+        self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=50, columnspan=3)
         self.init_data_for_GUI()
         self.plot_frame()
 
@@ -80,7 +80,7 @@ class LabelGUI:
         self.scan_pos_question_components = self.go_to_scan_position_question()  # Start with scanning position
         self.label_text_font = tkFont.Font(family='Segoe UI', size=12)
         self.label_text_font_bold = tkFont.Font(family='Segoe UI', size=12, weight='bold')
-        self.label_text = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white') # Initialize text label below the figure without text
+        self.label_text = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white')  # Initialize text label below the figure without text
         self.label_text.grid(row=51)
         self.label_text2 = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white')  # Initialize text label below the figure without text
 
@@ -90,9 +90,17 @@ class LabelGUI:
         frame_index_df = pd.DataFrame(columns=['video file'], data=[self.dicom_file_names[self.video_number]] * len(self.frames))
         self.frame_info = self.frame_info.append(frame_index_df).fillna('')
         self.frame_info.reset_index(drop=True, inplace=True)
-
         self.frame_num = 0
         self.frame_index_start = frame_index_df.shape[0]
+
+    def show_loading_text(self):
+        self.loading_text_font_bold = tkFont.Font(family='Segoe UI', size=18, weight='bold')
+        self.loading_text = tkinter.Label(master=self.master, text='Loading Data. Please wait.', font=self.loading_text_font_bold, bg='white')
+        self.loading_text.grid(row=25, column=1)
+        self.master.update_idletasks()
+
+    def remove_loading_text(self):
+        self.loading_text.destroy()
 
     def init_for_next_video(self):
         self.init_data_for_GUI()
@@ -161,24 +169,41 @@ class LabelGUI:
                 multiple_label_text = ', '.join(self.labels)
                 self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = multiple_label_text
                 self.print_labelling_text(multiple_label_text)
-                self.restore_color_of_label_buttons()
-                self.labels = []
         if self.frame_num < (len(self.frames)-1):
+            self.restore_color_of_label_buttons()
             self.frame_num += 1
+            self.update_labels_attribute()  # To color buttons according to labels that were already done
+            for pathology in self.labels:
+                self.highlight_label_button(pathology)
             self.update_frame()
         else:
             self.go_to_next_video()
 
     def previous_frame(self):
         if self.frame_num > 0:
+            self.restore_color_of_label_buttons()  # Go back to the default button color
             self.frame_num -= 1
+            self.update_labels_attribute()
+            for pathology in self.labels:  # Highlights the buttons of labels added to the frame previously
+                self.highlight_label_button(pathology)
             self.update_frame()
+
+    def update_labels_attribute(self):
+        pathology_labels = self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label']
+
+        if len(pathology_labels) == 0:
+            self.labels = []
+        else:
+            pathology_labels = pathology_labels.replace(' ', '', 1)
+            self.labels = pathology_labels.split(',')
 
     def go_to_next_video(self):
         self.save_data()
 
         self.video_number += 1
+        self.show_loading_text()
         self.init_for_next_video()
+        self.remove_loading_text()
         self.update_frame()
 
     def go_to_scan_position_question(self):
@@ -258,7 +283,9 @@ class LabelGUI:
         self.labels = []
 
     def restore_color_of_label_buttons(self):
+        print('restore color of label buttons')
         for label in self.labels:
+            print(label)
             pathology_index = self.pathology_labels.index(label)
             pressed_button = self.labelling_buttons[pathology_index]
             pressed_button.configure(bg=self.default_button_color)
@@ -289,9 +316,7 @@ class LabelGUI:
     def process_label_button_press(self, pathology):
         if self.label_mode.get() == 'multiple':
             if not pathology in self.labels:
-                pathology_index = self.pathology_labels.index(pathology)
-                pressed_button = self.labelling_buttons[pathology_index]
-                pressed_button.configure(bg='dark gray')
+                self.highlight_label_button(pathology)
                 self.labels.append(pathology)
             else:
                 print('This label has already been added to this frame')
@@ -299,6 +324,11 @@ class LabelGUI:
             self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = pathology
             self.print_labelling_text(pathology)
             self.next_frame()
+
+    def highlight_label_button(self, pathology):
+        pathology_index = self.pathology_labels.index(pathology)
+        pressed_button = self.labelling_buttons[pathology_index]
+        pressed_button.configure(bg='dark gray')
 
     def print_labelling_text(self, labels):
         self.label_text.destroy()
