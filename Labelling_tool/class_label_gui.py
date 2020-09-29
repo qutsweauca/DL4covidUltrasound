@@ -4,7 +4,7 @@ import tkinter.font as tkFont
 import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from get_files_with_extension import get_files_with_extension
+from get_files_with_extension import get_files_with_extension, get_files_without_extension
 from label_gui_plot import get_list_of_images_from_dicom_file
 import pandas as pd
 from functools import partial
@@ -44,9 +44,10 @@ class LabelGUI:
         self.create_output_filename()
 
         # Getting and storing DICOM file names
-        self.dicom_file_names = get_files_with_extension(self.dicom_data_path, file_extension)
+        self.dicom_file_names = get_files_without_extension(self.dicom_data_path)
+        self.dicom_file_names.extend(get_files_with_extension(self.dicom_data_path, 'dcm'))
+        print(self.dicom_file_names)
         self.video_info.loc[:, 'video file'] = self.dicom_file_names
-
         self.init_GUI()
 
     def create_output_filename(self):
@@ -199,12 +200,14 @@ class LabelGUI:
 
     def go_to_next_video(self):
         self.save_data()
-
-        self.video_number += 1
-        self.show_loading_text()
-        self.init_for_next_video()
-        self.remove_loading_text()
-        self.update_frame()
+        if self.video_number == len(self.dicom_file_names)-1:
+            self.done()
+        else:
+            self.video_number += 1
+            self.show_loading_text()
+            self.init_for_next_video()
+            self.remove_loading_text()
+            self.update_frame()
 
     def go_to_scan_position_question(self):
 
@@ -285,9 +288,7 @@ class LabelGUI:
         self.labels = []
 
     def restore_color_of_label_buttons(self):
-        print('restore color of label buttons')
         for label in self.labels:
-            print(label)
             pathology_index = self.pathology_labels.index(label)
             pressed_button = self.labelling_buttons[pathology_index]
             pressed_button.configure(bg=self.default_button_color)
@@ -297,7 +298,6 @@ class LabelGUI:
             component.destroy()
 
     def process_scan_position_button_press(self, view):
-        print(view)
         self.video_info.loc[self.video_number, 'scan location'] = view
         for button in self.scan_buttons:
             button.destroy()
@@ -316,7 +316,6 @@ class LabelGUI:
             self.previous_frame()
 
     def process_key_press_view_selection(self, event):
-        print('button pressed')
         if event.char == 'l':
             self.next_frame()
         elif event.char == 'k':
@@ -355,8 +354,33 @@ class LabelGUI:
 
     def get_US_scan_location(self):
         view = self.dicom_file_names[self.video_number].split('_')[-1]
+        view = view.split('.')[0]
         return view
 
-    def on_close(self):
+    def done(self):
         """Destroys the gui window as soon as the database is saved"""
+        self.exit_frame = tkinter.Frame(self.master, padx=10, background='white')
+        self.exit_frame.grid(column=1, row=25)
+        # ques_frame.rowconfigure(0, pad=5)
+        self.exit_frame.rowconfigure(1, pad=5)
+        # ques_frame.rowconfigure(2, pad=5)
+
+        self.loading_text_font_bold = tkFont.Font(family='Segoe UI', size=18, weight='bold')
+        self.close_text = tkinter.Label(master=self.exit_frame, text='All videos have been labeled. You can go back to labelling or exit',
+                                        font=self.loading_text_font_bold, bg='white')
+        self.close_text.grid(row=0, column=0, columnspan=2)
+
+        # Create scanning location buttons and question
+        back_button = tkinter.Button(master=self.exit_frame, height=1, width=self.buttonwidth, text="Back",
+                                   command=lambda: self.clean_exit_prompt())
+        exit_button = tkinter.Button(master=self.exit_frame, height=1, width=self.buttonwidth, text="Exit",
+                                    command=lambda: self.exit())
+        back_button.grid(row=1, column=0, sticky='e', padx=10)
+        exit_button.grid(row=1, column=1, sticky='w', padx=10)
+        # self.master.update_idletasks()
+
+    def exit(self):
         self.master.destroy()
+
+    def clean_exit_prompt(self):
+        self.exit_frame.destroy()
