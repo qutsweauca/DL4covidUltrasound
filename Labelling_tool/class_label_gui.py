@@ -93,8 +93,6 @@ class LabelGUI:
         self.frame_info.reset_index(drop=True, inplace=True)
         self.frame_num = 0
         self.frame_index_start = self.frame_info.shape[0]
-        print(self.frame_index_start)
-        print(self.frame_index)
 
     def show_loading_text(self):
         self.loading_text_font_bold = tkFont.Font(family='Segoe UI', size=18, weight='bold')
