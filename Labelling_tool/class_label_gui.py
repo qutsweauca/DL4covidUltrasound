@@ -77,12 +77,12 @@ class LabelGUI:
         self.plot_frame()
 
         self.add_standard_buttons()
-        self.scan_pos_question_components = self.go_to_scan_position_question()  # Start with scanning position
         self.label_text_font = tkFont.Font(family='Segoe UI', size=12)
         self.label_text_font_bold = tkFont.Font(family='Segoe UI', size=12, weight='bold')
         self.label_text = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white')  # Initialize text label below the figure without text
         self.label_text.grid(row=51)
         self.label_text2 = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white')  # Initialize text label below the figure without text
+        self.scan_pos_question_components = self.go_to_scan_position_question()  # Start with scanning position
 
     def init_data_for_GUI(self):
         self.frames = get_list_of_images_from_dicom_file(self.dicom_file_names[self.video_number])
@@ -225,6 +225,8 @@ class LabelGUI:
         view = self.get_US_scan_location()
         scan_pos_ques = tkinter.Label(ques_frame, text='Is this a {} view?'.format(view), background='white')
         scan_pos_ques.grid(row=0, column=4)
+        self.master.bind("<Key>", self.process_key_press_view_selection)
+        self.master.focus_set()
         return [yes_button, no_button, scan_pos_ques, ques_frame]  # return handles to components to clean them up later
 
     def go_to_set_US_scan_location_view(self):
@@ -271,10 +273,10 @@ class LabelGUI:
             clear_labels_button.grid(row=i+1, column=4)
             misc_button_frame.rowconfigure(i+1, pad=50)
             self.labelling_buttons.append(clear_labels_button)
-        misc_button_frame.bind("<Key>", self.process_key_press)
-        misc_button_frame.focus_set()
+        self.master.bind("<Key>", self.process_key_press_label_view)
+        self.master.focus_set()
         self.labelling_buttons.append(misc_button_frame)
-        self.default_button_color = label_button.cget("background") # Save button color to restore it later
+        self.default_button_color = label_button.cget("background")  # Save button color to restore it later
         self.frame_num = 0
         self.update_frame()
 
@@ -301,7 +303,7 @@ class LabelGUI:
             button.destroy()
         self.go_to_labelling_view()
 
-    def process_key_press(self, event):
+    def process_key_press_label_view(self, event):
         if str.isnumeric(event.char):
             label_no = int(event.char)
             if label_no < len(self.pathology_labels):
@@ -309,6 +311,13 @@ class LabelGUI:
             else:
                 print('Number pressed exceeds the amount of labels')
         elif event.char == 'l':
+            self.next_frame()
+        elif event.char == 'k':
+            self.previous_frame()
+
+    def process_key_press_view_selection(self, event):
+        print('button pressed')
+        if event.char == 'l':
             self.next_frame()
         elif event.char == 'k':
             self.previous_frame()
