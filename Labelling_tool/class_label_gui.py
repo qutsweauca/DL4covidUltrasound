@@ -24,57 +24,76 @@ class LabelGUI:
             file_extension (str): extension of the DICOM files containing the images.
         """
         # self.label_mode = 'multiple'
+
+
+        # Initialize some stuff
         self.labels = []
         self.labelling_buttons = []
-
-        # Initializing some stuff
+        self.frame_num = 0 # start at the first frame of the US sequence
         self.master = master
         self.video_number = first_video
         self.dicom_data_path = dicom_data_path
         self.video_info = pd.DataFrame(columns=['video file', 'scan location'])
         self.frame_info = pd.DataFrame(columns=['video file', 'pathology label'])
-        self.frame_index_start = 0
+        self.frame_index_start = 0  # The index at which the current video is starting in self.frame_info
         self.us_scan_positions = ('RANT', 'LANT', 'LPL',  'RPL', 'LPU', 'RPU')
-        self.first_row_multiple_buttons = 15
         self.pathology_labels = ['Normal', 'Collapse', 'Consolidation', 'APO / Int. Syndrome', 'Pneumothorax', 'Effusion', 'B-lines', 'Pleural thickening', 'Irregular pleura']
 
-        self.figure = plt.figure(figsize=np.array((9.6, 7.2))*1.1)
+        # Defaults for the GUI layout
+        self.figure = plt.figure(figsize=np.array((9.6, 7.2))*1.1)  # Resolution of the images we are using is 960x720, this should be done dynamically based on the image input size
         self.figure.set_tight_layout(True)
-        self.buttonwidth = 20
+        self.buttonwidth = 20  # Fits the currently used text for the buttons
+
         self.create_output_filename()
 
         # Getting and storing DICOM file names
-        self.dicom_file_names = get_files_without_extension(self.dicom_data_path)
-        self.dicom_file_names.extend(get_files_with_extension(self.dicom_data_path, 'dcm'))
+        self.dicom_file_names = get_files_without_extension(self.dicom_data_path)  # Dicom files often have no extension
+        self.dicom_file_names.extend(get_files_with_extension(self.dicom_data_path, 'dcm'))  # Files with Dicom extension .dcm
         print(self.dicom_file_names)
         self.video_info.loc[:, 'video file'] = self.dicom_file_names
+
         self.init_GUI()
 
     def create_output_filename(self):
-        suffix = os.path.split(self.dicom_data_path)[-1]
+        """ Creates an unique name for the output files such that they are not overwritten
+        TODO refactor this function to a generic one and remove it from the class
+        :return:
+        """
+        suffix = os.path.split(self.dicom_data_path)[-1]  # Use the selected folder as a suffix for the filename
         self.frame_output_file = 'frame_info_' + suffix + '.csv'
         self.video_output_file = 'video_info_' + suffix + '.csv'
         self.frame_output_file = self.check_for_duplicate_filename(self.dicom_data_path, self.frame_output_file)
         self.video_output_file = self.check_for_duplicate_filename(self.dicom_data_path, self.video_output_file)
 
     def check_for_duplicate_filename(self, datapath, filename):
+        """ Adds a number to the filename if it already exists
+
+        TODO Bug: For 10 or more files this functions adds an additional _ to the filename
+        TODO refactor this function to a generic one and remove it from the class
+        :param datapath: (string) The datapath to check for a duplicate name
+        :param filename: (string) The filename that is checked for uniqueness
+        :return:
+        """
         if os.path.exists(os.path.join(datapath, filename)):
-            filename = filename[:-4] + '_1' + filename[-4:]
+            filename = filename[:-4] + '_1' + filename[-4:]  # the last four characters are an extension
 
         i = 2
         while os.path.exists(os.path.join(datapath, filename)):
-            filename = filename[:-6] + '_' + str(i) + filename[-4:]
+            filename = filename[:-6] + '_' + str(i) + filename[-4:] # The index changes when the filename already has been altered
             i += 1
         return filename
 
     def init_GUI(self) -> None:
-        """Create GUI canvas and buttons"""
+        """Create GUI canvas and standard buttons and go to the initial view (scanning position question)
+        TODO Make the starting view configurable
+        """
+
         self.figure.clf()
 
         # Create plotting canvas
         self.canvas = FigureCanvasTkAgg(self.figure, master=self.master)
         self.canvas.get_tk_widget().grid(row=0, column=0, rowspan=50, columnspan=3)
-        self.init_data_for_GUI()
+        self.init_data_for_us_sequence()
         self.plot_frame()
 
         self.add_standard_buttons()
@@ -83,16 +102,21 @@ class LabelGUI:
         self.label_text = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white')  # Initialize text label below the figure without text
         self.label_text.grid(row=51)
         self.label_text2 = tkinter.Label(master=self.master, text='', font=self.label_text_font, bg='white')  # Initialize text label below the figure without text
-        self.scan_pos_question_components = self.go_to_scan_position_question()  # Start with scanning position
 
-    def init_data_for_GUI(self):
+        self.scan_pos_question_components = self.go_to_scan_position_question()  # Start with confirming the scanning position
+
+    def init_data_for_us_sequence(self):
+        """ Set the necessary variable when loading a new us sequence
+
+        :return:
+        """
         self.frames = get_list_of_images_from_dicom_file(self.dicom_file_names[self.video_number])
-        self.frame_index = self.generate_frame_index(self.frame_index_start, len(self.frames))
-        frame_index_df = pd.DataFrame(columns=['video file'], data=[self.dicom_file_names[self.video_number]] * len(self.frames))
-        self.frame_info = self.frame_info.append(frame_index_df).fillna('')
+        self.frame_index_start = self.frame_info.shape[0]  # The start of the index is the current size of the frame_info DataFrame
+        self.frame_index = self.generate_frame_index(self.frame_index_start, len(self.frames))  # the number of indexes is equal to the amount of frames
+        frame_index_df = pd.DataFrame(columns=['video file'], data=[self.dicom_file_names[self.video_number]] * len(self.frames))  # create dataframe with the video name for frame_info
+        self.frame_info = self.frame_info.append(frame_index_df).fillna('')  # fill all other columns than video_file with an empty string
         self.frame_info.reset_index(drop=True, inplace=True)
-        self.frame_num = 0
-        self.frame_index_start = self.frame_info.shape[0]
+        self.frame_num = 0  # Start at the first frame of the sequence
 
     def show_loading_text(self):
         self.loading_text_font_bold = tkFont.Font(family='Segoe UI', size=18, weight='bold')
@@ -104,7 +128,7 @@ class LabelGUI:
         self.loading_text.destroy()
 
     def init_for_next_video(self):
-        self.init_data_for_GUI()
+        self.init_data_for_us_sequence()
         self.destroy_list_of_GUI_components(self.labelling_buttons)
         self.scan_pos_question_components = self.go_to_scan_position_question()
 

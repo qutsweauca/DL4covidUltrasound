@@ -25,6 +25,6 @@ def get_files_without_extension(folder_name: str) -> list:
     file_names = []
     for path, _, files in os.walk(folder_name):
         for file in files:
-            if file.find('.') < 0:
+            if file.find('.') < 0:  # Assumption: all the files without a period (.) do not have an extension
                 file_names.append(os.path.join(path, file))
     return file_names
