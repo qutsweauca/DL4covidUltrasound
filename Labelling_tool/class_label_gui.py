@@ -85,7 +85,7 @@ class LabelGUI:
 
     def init_GUI(self) -> None:
         """Create GUI canvas and standard buttons and go to the initial view (scanning position question)
-        TODO Make the starting view configurable
+        TODO Make the starting view configurable (it is also hard coded in init_for_next_us_sequence)
         """
 
         self.figure.clf()
@@ -119,34 +119,60 @@ class LabelGUI:
         self.frame_num = 0  # Start at the first frame of the sequence
 
     def show_loading_text(self):
+        """ Show text when a new US sequence is loaded
+
+        :return:
+        """
         self.loading_text_font_bold = tkFont.Font(family='Segoe UI', size=18, weight='bold')
         self.loading_text = tkinter.Label(master=self.master, text='Loading Data. Please wait.', font=self.loading_text_font_bold, bg='white')
         self.loading_text.grid(row=25, column=1)
-        self.master.update_idletasks()
+        self.master.update_idletasks()  # Needed to display the text immediately
 
     def remove_loading_text(self):
+        """ Remove the loading text completely
+
+        :return:
+        """
         self.loading_text.destroy()
 
-    def init_for_next_video(self):
+    def init_for_next_us_sequence(self):
+        """ Go back to the initial view of the GUI for the next us sequence
+
+        :return:
+        """
         self.init_data_for_us_sequence()
-        self.destroy_list_of_GUI_components(self.labelling_buttons)
+        self.destroy_list_of_GUI_components(self.labelling_buttons)  # Destroy the existing GUI components (in this case the components in the labelling view)
         self.scan_pos_question_components = self.go_to_scan_position_question()
 
     def generate_frame_index(self, current, no_frames):
+        """ Creates a new index range
+
+        :param current: (int) start of the range
+        :param no_frames: (int) the length of the range
+        :return:
+        """
         return range(current, current + no_frames)
 
     def plot_frame(self):
+        """ Plot a frame of the us sequence onto the GUI canvas
+
+        :return:
+        """
         plt.gca()
-        plt.imshow(self.frames[self.frame_num], aspect='equal')
-        plt.xticks([])
-        plt.yticks([])
+        plt.imshow(self.frames[self.frame_num], aspect='equal')  # Assumption of square pixels
+        plt.xticks([])  # No ticks needed for an image
+        plt.yticks([])  # No ticks needed for an image
         plt.title('Frame {} / {}'.format(self.frame_num + 1, len(self.frames)))
-        self.canvas.draw()
+        self.canvas.draw()  # Needed to update the display
 
     def update_frame(self):
-        self.figure.axes[0].images[0].set_array(self.frames[self.frame_num])
+        """ Updates the GUI canvas with a new frame
+
+        :return:
+        """
+        self.figure.axes[0].images[0].set_array(self.frames[self.frame_num])  # Update the data of the figure for speed
         plt.title('Frame {} / {}'.format(self.frame_num + 1, len(self.frames)))
-        self.canvas.draw()
+        self.canvas.draw()  # Needed to update the display
 
     def add_standard_buttons(self):
 
@@ -229,7 +255,7 @@ class LabelGUI:
         else:
             self.video_number += 1
             self.show_loading_text()
-            self.init_for_next_video()
+            self.init_for_next_us_sequence()
             self.remove_loading_text()
             self.update_frame()
 
