@@ -283,14 +283,19 @@ class LabelGUI:
             self.update_frame()
 
     def go_to_scan_position_question(self):
+        """ Go to the GUI view to confirm the scanning location
 
+        :return:
+        """
+
+        # Create a frame as placeholder
         ques_frame = tkinter.Frame(self.master, padx=10, background='white')
         ques_frame.grid(column=4, row=8)
         ques_frame.rowconfigure(0, pad=5)
         ques_frame.rowconfigure(1, pad=5)
         ques_frame.rowconfigure(2, pad=5)
 
-        # Create scanning location buttons and question
+        # Create scanning location yes / no buttons
         yes_button = tkinter.Button(master=ques_frame, height=1, width=self.buttonwidth, text="Yes",
                                         command=lambda: self.confirm_us_scan_position())
         no_button = tkinter.Button(master=ques_frame, height=1, width=self.buttonwidth, text="No",
@@ -298,85 +303,141 @@ class LabelGUI:
         yes_button.grid(row=1, column=4)
         no_button.grid(row=2, column=4)
 
-        view = self.get_US_scan_location()
+        # Create scanning location question
+        view = self.get_US_scan_location()  # based on dicom filename
         scan_pos_ques = tkinter.Label(ques_frame, text='Is this a {} view?'.format(view), background='white')
         scan_pos_ques.grid(row=0, column=4)
+
+        # Setup keyboard shortcuts
         self.master.bind("<Key>", self.process_key_press_view_selection)
-        self.master.focus_set()
+        self.master.focus_set()  # Needed for keyboard shortcuts to work
         return [yes_button, no_button, scan_pos_ques, ques_frame]  # return handles to components to clean them up later
 
     def go_to_set_US_scan_location_view(self):
-        self.scan_buttons = []
+        """ GUI view for selecting the scanning position
+
+        :return:
+        """
+        self.scan_buttons = [] # Needed to highlight the correct buttons according to the selected labels
+        # Create frame as a placeholder
         misc_button_frame = tkinter.Frame(self.master, padx=10, background='white')
         misc_button_frame.grid(column=4, row=12, rowspan=len(self.us_scan_positions)*3)
+
+        # Create as many buttons as there are us scan positions
         for i, button_name in enumerate(self.us_scan_positions):
             scan_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text=button_name,
-                                     command=partial(self.process_scan_position_button_press, button_name))
+                                     command=partial(self.process_scan_position_button_press, button_name)) # partial is a method to create a function reference
             scan_button.grid(row=i, column=4)
             misc_button_frame.rowconfigure(i, pad=5)
             self.scan_buttons.append(scan_button)
         self.scan_buttons.append(misc_button_frame)
 
     def confirm_us_scan_position(self):
+        """ Saves the us scan position when confirmed and goes to the labelling view
+
+        :return:
+        """
         self.destroy_scan_pos_question()
-        # self.destroy_list_of_GUI_components(self.scan_pos_question_components)
         view = self.get_US_scan_location()
         self.video_info.loc[self.video_number, 'scan location'] = view
         self.go_to_labelling_view()
 
     def reject_us_scan_position(self):
+        """ When the us scan position is rejected, go to the view to set the us scan location
+
+        :return:
+        """
         self.destroy_scan_pos_question()
-        # self.destroy_list_of_GUI_components(self.scan_pos_question_components)
         self.go_to_set_US_scan_location_view()
 
     def destroy_scan_pos_question(self):
+        """ Destroys all GUI components related to the scanning position question
+
+        :return:
+        """
         for component in self.scan_pos_question_components:
             component.destroy()
 
     def go_to_labelling_view(self):
+        """ Initialize the view for labelling a frame
+
+        :return:
+        """
         self.labelling_buttons = []
+
+        #Create paceholder for the buttons
         misc_button_frame = tkinter.Frame(self.master, padx=10, background='white')
         misc_button_frame.grid(column=4, row=12, rowspan=len(self.pathology_labels)*3)
+
+        # Create as many buttons as there are labels
         for i, button_name in enumerate(self.pathology_labels):
             label_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text='({}) '.format(i) + button_name,
                                           command=partial(self.process_label_button_press, button_name), anchor='w')
             label_button.grid(row=i, column=4)
             misc_button_frame.rowconfigure(i, pad=5)
-            self.labelling_buttons.append(label_button)
-        if self.label_mode.get() == 'multiple':
+            self.labelling_buttons.append(label_button)  # Save buttons handles to update them (e.g. color) later
+
+
+        if self.label_mode.get() == 'multiple': # Button to clear the labels is only needed in multiple labelling mode
             clear_labels_button = tkinter.Button(master=misc_button_frame, height=1, width=self.buttonwidth, text='Clear labels',
                                                  command=self.process_clear_label_button)
             clear_labels_button.grid(row=i+1, column=4)
             misc_button_frame.rowconfigure(i+1, pad=50)
             self.labelling_buttons.append(clear_labels_button)
+
+        # Setup keyboard shortcuts
         self.master.bind("<Key>", self.process_key_press_label_view)
         self.master.focus_set()
-        self.labelling_buttons.append(misc_button_frame)
+
+        self.labelling_buttons.append(misc_button_frame) # Add the frame to the end for cleaning it up later
         self.default_button_color = label_button.cget("background")  # Save button color to restore it later
         self.frame_num = 0
         self.update_frame()
 
     def process_clear_label_button(self):
+        """ Clears the already selected labels for a frame
+
+        :return:
+        """
         self.restore_color_of_label_buttons()
         self.labels = []
 
     def restore_color_of_label_buttons(self):
+        """ go back to the default label button color
+
+        :return:
+        """
         for label in self.labels:
             pathology_index = self.pathology_labels.index(label)
             pressed_button = self.labelling_buttons[pathology_index]
             pressed_button.configure(bg=self.default_button_color)
 
     def destroy_list_of_GUI_components(self, component_list):
+        """ Destroys all the components that are in a list
+
+        :param component_list: (list) A list of GUI components
+        :return:
+        """
         for component in component_list:
             component.destroy()
 
     def process_scan_position_button_press(self, view):
+        """ Saves the us scan position after the button is selected
+
+        :param view: (string) the us scan position
+        :return:
+        """
         self.video_info.loc[self.video_number, 'scan location'] = view
         for button in self.scan_buttons:
             button.destroy()
         self.go_to_labelling_view()
 
     def process_key_press_label_view(self, event):
+        """ Process a key press for the label view
+
+        :param event:
+        :return:
+        """
         if str.isnumeric(event.char):
             label_no = int(event.char)
             if label_no < len(self.pathology_labels):
@@ -389,12 +450,22 @@ class LabelGUI:
             self.previous_frame()
 
     def process_key_press_view_selection(self, event):
+        """ Process a key press for the scan position question view
+
+        :param event:
+        :return:
+        """
         if event.char == 'l':
             self.next_frame()
         elif event.char == 'k':
             self.previous_frame()
 
     def process_label_button_press(self, pathology):
+        """ Process akey press in the labelling view
+
+        :param pathology:
+        :return:
+        """
         if self.label_mode.get() == 'multiple':
             if not pathology in self.labels:
                 self.highlight_label_button(pathology)
@@ -407,11 +478,21 @@ class LabelGUI:
             self.next_frame()
 
     def highlight_label_button(self, pathology):
+        """ changes the color a of a button (to indicate what labels were already selected)
+
+        :param pathology:
+        :return:
+        """
         pathology_index = self.pathology_labels.index(pathology)
         pressed_button = self.labelling_buttons[pathology_index]
         pressed_button.configure(bg='dark gray')
 
     def print_labelling_text(self, labels):
+        """ Prints what labels were selected when going to the next frame
+
+        :param labels: (list of strings) These strings will be printed below the figure
+        :return:
+        """
         self.label_text.destroy()
         self.label_text2.destroy()
         label_string = '{}'.format(labels)
@@ -422,38 +503,58 @@ class LabelGUI:
         self.label_text2.grid(row=51, column=1, sticky='W')
 
     def save_data(self):
+        """ Export the data in the DataFrames to a csv
+
+        :return:
+        """
         self.frame_info.to_csv(os.path.join(self.dicom_data_path, self.frame_output_file))
         self.video_info.to_csv(os.path.join(self.dicom_data_path, self.video_output_file))
 
     def get_US_scan_location(self):
-        view = self.dicom_file_names[self.video_number].split('_')[-1]
-        view = view.split('.')[0]
+        """ Retrieves the us scan location based on the filename
+
+        :return:
+        """
+        view = self.dicom_file_names[self.video_number].split('_')[-1] # get everything after the underscore
+        view = view.split('.')[0]  # Cut off the file extension if there is one
         return view
 
     def done(self):
-        """Destroys the gui window as soon as the database is saved"""
+        """
+        Closes the GUI window whe the user confirms he is done
+        :return:
+        """
+
         self.exit_frame = tkinter.Frame(self.master, padx=10, background='white')
         self.exit_frame.grid(column=1, row=25)
-        # ques_frame.rowconfigure(0, pad=5)
-        self.exit_frame.rowconfigure(1, pad=5)
-        # ques_frame.rowconfigure(2, pad=5)
+        self.exit_frame.rowconfigure(1, pad=5)  # add padding for the buttons
 
+        # Create text for the exit confirmation
         self.loading_text_font_bold = tkFont.Font(family='Segoe UI', size=18, weight='bold')
         self.close_text = tkinter.Label(master=self.exit_frame, text='All videos have been labeled. You can go back to labelling or exit',
                                         font=self.loading_text_font_bold, bg='white')
         self.close_text.grid(row=0, column=0, columnspan=2)
 
-        # Create scanning location buttons and question
+        # Create back and exit buttons
         back_button = tkinter.Button(master=self.exit_frame, height=1, width=self.buttonwidth, text="Back",
                                    command=lambda: self.clean_exit_prompt())
         exit_button = tkinter.Button(master=self.exit_frame, height=1, width=self.buttonwidth, text="Exit",
                                     command=lambda: self.exit())
+
+        # Put the buttons on the edge of the columns to make them appear close together
         back_button.grid(row=1, column=0, sticky='e', padx=10)
         exit_button.grid(row=1, column=1, sticky='w', padx=10)
-        # self.master.update_idletasks()
 
     def exit(self):
+        """ Destroys all GUI components
+
+        :return:
+        """
         self.master.destroy()
 
     def clean_exit_prompt(self):
+        """ When going back to labelling the done (exit) dialog is removed
+
+        :return:
+        """
         self.exit_frame.destroy()
