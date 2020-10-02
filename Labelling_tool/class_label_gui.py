@@ -5,7 +5,7 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from get_files_with_extension import get_files_with_extension, get_files_without_extension
-from label_gui_plot import get_list_of_images_from_dicom_file
+from load_images_from_dicom import get_list_of_images_from_dicom_file
 import pandas as pd
 from functools import partial
 import numpy as np

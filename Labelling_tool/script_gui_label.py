@@ -1,8 +1,5 @@
 import tkinter
-import argparse
 from class_label_gui import LabelGUI
-from pydicom import dcmread
-import get_files_with_extension
 from tkinter import filedialog
 
 # Pop up dialog for selecting a folder
