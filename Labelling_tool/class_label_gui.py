@@ -38,6 +38,8 @@ class LabelGUI:
         self.frame_index_start = 0  # The index at which the current video is starting in self.frame_info
         self.us_scan_positions = ('RANT', 'LANT', 'LPL',  'RPL', 'LPU', 'RPU')
         self.pathology_labels = ['Normal', 'Collapse', 'Consolidation', 'APO / Int. Syndrome', 'Pneumothorax', 'Effusion', 'B-lines', 'Pleural thickening', 'Irregular pleura']
+        self.label_mode = tkinter.StringVar()  # StringVar needed for radio buttons
+        self.label_mode.set('multiple')  # TODO The label mode cannot be change to single when labels are already selected in the multiple label mode
 
         # Defaults for the GUI layout
         self.figure = plt.figure(figsize=np.array((9.6, 7.2))*1.1)  # Resolution of the images we are using is 960x720, this should be done dynamically based on the image input size
@@ -175,6 +177,10 @@ class LabelGUI:
         self.canvas.draw()  # Needed to update the display
 
     def add_standard_buttons(self):
+        """ Add buttons that are used in every view of the GUI
+
+        :return:
+        """
 
         # Create a placeholder for the standard buttons
         std_button_frame = tkinter.Frame(self.master, padx=10, background='white')
@@ -196,13 +202,9 @@ class LabelGUI:
                                      command=lambda: self.save_data())
         save_button.grid(row=2, column=4)
 
-        # Label mode selection
+        # Label mode selection radio buttons
         label_mode_frame = tkinter.Frame(self.master, background='white')
         label_mode_frame.grid(column=4, row=5, padx=10, sticky='w')
-
-        self.label_mode = tkinter.StringVar()
-        self.label_mode.set('multiple')
-
         label_mode_text = tkinter.Label(master=label_mode_frame, text='Label mode', background='white')
         label_mode_text.grid(sticky='w')
 
