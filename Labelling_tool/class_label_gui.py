@@ -217,12 +217,19 @@ class LabelGUI:
         multiple_labels_rad_button.grid(sticky='w')
 
     def next_frame(self):
+        """ Goes to the next frame in the us sequence. Also takes care of saving the labels in multiple label mode and
+        colors the buttons according to previously chosen labels for a frame.
+
+        :return:
+        """
         if self.label_mode.get() == 'multiple':
             if len(self.labels) > 0:
-                multiple_label_text = ', '.join(self.labels)
+                multiple_label_text = ', '.join(self.labels)  # Create a string
+                # The label text is printed in process_label_button_press for the single label mode
                 self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label'] = multiple_label_text
                 self.print_labelling_text(multiple_label_text)
-        if self.frame_num < (len(self.frames)-1):
+
+        if self.frame_num < (len(self.frames)-1):  # Go to the next frame if it is not the last one of the us sequence
             self.restore_color_of_label_buttons()
             self.frame_num += 1
             self.update_labels_attribute()  # To color buttons according to labels that were already done
@@ -230,9 +237,14 @@ class LabelGUI:
                 self.highlight_label_button(pathology)
             self.update_frame()
         else:
-            self.go_to_next_video()
+            self.go_to_next_us_sequence()  # Go to the next us sequence if it is the last frame of the us sequence
 
     def previous_frame(self):
+        """ Go to the previous frame in the video and color the label buttons accordingly
+        # TODO Support going back to the last frame of the previous video
+
+        :return:
+        """
         if self.frame_num > 0:
             self.restore_color_of_label_buttons()  # Go back to the default button color
             self.frame_num -= 1
@@ -242,18 +254,27 @@ class LabelGUI:
             self.update_frame()
 
     def update_labels_attribute(self):
+        """ Set the labels attribute according to the currently displayed frame
+
+        :return:
+        """
         pathology_labels = self.frame_info.loc[self.frame_index[self.frame_num], 'pathology label']
 
         if len(pathology_labels) == 0:
             self.labels = []
         else:
+            # Convert the string fromthe frame_info DataFrame back to a list
             pathology_labels = pathology_labels.replace(' ', '', 1)
             self.labels = pathology_labels.split(',')
 
-    def go_to_next_video(self):
-        self.save_data()
+    def go_to_next_us_sequence(self):
+        """ Loads the next video or exits the GUI after the last video
+
+        :return:
+        """
+        self.save_data() # To not lose data after a complete video has been labelled
         if self.video_number == len(self.dicom_file_names)-1:
-            self.done()
+            self.done()  # prepare to exit the program
         else:
             self.video_number += 1
             self.show_loading_text()
